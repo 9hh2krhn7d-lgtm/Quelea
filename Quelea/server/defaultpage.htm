@@ -186,10 +186,48 @@
                 if (chords) {
                     document.getElementById('chords').checked = chords;
                 }
+                var fixedSize = getFixedFontSize();
+                if (fixedSize > 0) {
+                    document.getElementById('font-size').value = fixedSize;
+                    document.getElementById('font-size-auto').checked = false;
+                } else {
+                    document.getElementById('font-size-auto').checked = true;
+                }
+                updateFontSizeControls();
+            }
+            // Returns the fixed font size in px chosen by the user, or 0 if the size should be automatic.
+            function getFixedFontSize()
+            {
+                var saved = parseInt(getCookie("fontsize"), 10);
+                if (isNaN(saved) || saved <= 0) {
+                    return 0;
+                }
+                return saved;
+            }
+            function updateFontSizeControls()
+            {
+                var auto = document.getElementById('font-size-auto').checked;
+                var slider = document.getElementById('font-size');
+                slider.disabled = auto;
+                document.getElementById('font-size-value').innerHTML = auto ? "" : slider.value + " px";
+            }
+            function onFontSizeChange()
+            {
+                var auto = document.getElementById('font-size-auto').checked;
+                var slider = document.getElementById('font-size');
+                setCookie('fontsize', auto ? "auto" : slider.value, 100);
+                updateFontSizeControls();
+                shrink();
             }
             function shrink()
             {
                 var textDiv = document.getElementById("dynamicDiv");
+                var fixedSize = getFixedFontSize();
+                if (fixedSize > 0) {
+                    // User chose a fixed size - keep it the same for every slide.
+                    textDiv.style.fontSize = fixedSize + "px";
+                    return;
+                }
                 textDiv.style.fontSize = "200px";
                 var size = 200;
 //                var style = window.getComputedStyle(textDiv, null).getPropertyValue('font-size');
@@ -312,6 +350,9 @@
 
                 <div><p>[show.chords.label] <input type="checkbox" name="chords" id="chords" onchange="setCookie('chords', document.getElementById('chords').checked, 100);
                         shrink();"></p></div>
+
+                <div><p>[font.size.label]: <input type="range" id="font-size" min="20" max="300" step="5" value="100" oninput="onFontSizeChange()" onchange="onFontSizeChange()"> <span id="font-size-value"></span></p>
+                    <p><input type="checkbox" id="font-size-auto" checked onchange="onFontSizeChange()"> [font.size.auto.label]</p></div>
 
             </div>
         </div>

@@ -508,22 +508,40 @@ public class LyricDrawer extends WordDrawer {
      * to the allowed length.
      */
     private List<String> splitLine(String line, int maxLength) {
+        return splitLine(line, maxLength, capitaliseFirst);
+    }
+
+    /**
+     * Given a line of any length, sensibly split it up into several lines. This
+     * is the same splitting that is used when drawing text on the projector, so
+     * it can also be used to display text elsewhere (such as the mobile lyrics
+     * server) with exactly the same line breaks.
+     * <p/>
+     *
+     * @param line the line to split.
+     * @param maxLength the maximum number of characters on one line.
+     * @param capitaliseFirst true if the first letter of each line should be
+     * capitalised (if Quelea allows it.)
+     * @return the split line (or the unaltered line if it is less than or equal
+     * to the allowed length.
+     */
+    public static List<String> splitLine(String line, int maxLength, boolean capitaliseFirst) {
         List<String> sections = new ArrayList<>();
         if (line.length() > maxLength) {
             if (containsNotAtEnd(line, ";")) {
                 for (String s : splitMiddle(line, ';')) {
-                    sections.addAll(splitLine(s, maxLength));
+                    sections.addAll(splitLine(s, maxLength, capitaliseFirst));
                 }
             } else if (containsNotAtEnd(line, ",")) {
                 for (String s : splitMiddle(line, ',')) {
-                    sections.addAll(splitLine(s, maxLength));
+                    sections.addAll(splitLine(s, maxLength, capitaliseFirst));
                 }
             } else if (containsNotAtEnd(line, " ")) {
                 for (String s : splitMiddle(line, ' ')) {
-                    sections.addAll(splitLine(s, maxLength));
+                    sections.addAll(splitLine(s, maxLength, capitaliseFirst));
                 }
             } else {
-                sections.addAll(splitLine(new StringBuilder(line).insert(line.length() / 2, " ").toString(), maxLength));
+                sections.addAll(splitLine(new StringBuilder(line).insert(line.length() / 2, " ").toString(), maxLength, capitaliseFirst));
             }
         } else {
             line = line.trim();

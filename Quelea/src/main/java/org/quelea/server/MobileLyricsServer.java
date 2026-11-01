@@ -44,8 +44,10 @@ import org.quelea.services.languages.LabelGrabber;
 import org.quelea.services.utils.LineTypeChecker;
 import org.quelea.services.utils.LineTypeChecker.Type;
 import org.quelea.services.utils.LoggerUtils;
+import org.quelea.services.utils.QueleaProperties;
 import org.quelea.utils.Chord;
 import org.quelea.windows.library.LibraryBiblePanel;
+import org.quelea.windows.lyrics.LyricDrawer;
 import org.quelea.windows.main.LivePanel;
 import org.quelea.windows.main.MainPanel;
 import org.quelea.windows.main.QueleaApp;
@@ -128,6 +130,8 @@ public class MobileLyricsServer {
         content = content.replace("[loading.text]", LabelGrabber.INSTANCE.getLabel("loading.text"));
         content = content.replace("[font.colour.label]", LabelGrabber.INSTANCE.getLabel("font.colour.label"));
         content = content.replace("[background.colour.label]", LabelGrabber.INSTANCE.getLabel("background.colour.label"));
+        content = content.replace("[font.size.auto.label]", LabelGrabber.INSTANCE.getLabel("font.size.auto.label"));
+        content = content.replace("[font.size.label]", LabelGrabber.INSTANCE.getLabel("font.size.label"));
         content = content.replace("[change.graphics.label]", LabelGrabber.INSTANCE.getLabel("change.graphics.label"));
         content = content.replace("[show.chords.label]", LabelGrabber.INSTANCE.getLabel("stage.show.chords"));
         content = content.replace("[default.translation]", LabelGrabber.INSTANCE.getLabel("default.translation.label"));
@@ -360,7 +364,7 @@ public class MobileLyricsServer {
             if (running && lp.isContentShowing() && lp.getDisplayable() instanceof TextDisplayable) {
                 TextSection currentSection = lp.getLyricsPanel().getLyricsList().getSelectionModel().getSelectedItem();
                 StringBuilder ret = new StringBuilder();
-                for (String line : currentSection.getText(chords, false)) {
+                for (String line : splitLikeProjector(lp, currentSection, chords)) {
                     if (lp.getDisplayable() instanceof BiblePassage) {
                         ret.append("<span class=\"bible\">").append(line);
                     } else if (new LineTypeChecker(line).getLineType() == LineTypeChecker.Type.CHORDS) {
@@ -383,6 +387,36 @@ public class MobileLyricsServer {
             LOGGER.log(Level.WARNING, "Error getting lyrics", ex);
             return "";
         }
+    }
+
+    /**
+     * Get the lines of the current section, split into several lines in exactly
+     * the same way as the projector does it (long lines are split according to
+     * the "maximum characters per line" setting.) Without this a long line
+     * would be sent as just one line and displayed very small.
+     * <p>
+     * Nothing is split when chords are shown (that would break the chord
+     * alignment), for Bible passages (those are wrapped by the browser) or when
+     * a translation is active (the projector doesn't split in that case
+     * either.)
+     */
+    private List<String> splitLikeProjector(LivePanel lp, TextSection section, boolean chords) {
+        List<String> lines = new ArrayList<>();
+        boolean split = !chords && !(lp.getDisplayable() instanceof BiblePassage);
+        if (split && lp.getDisplayable() instanceof SongDisplayable) {
+            int index = lp.getLyricsPanel().getLyricsList().getSelectionModel().getSelectedIndex();
+            if (index >= 0 && ((SongDisplayable) lp.getDisplayable()).getCurrentTranslationSection(index) != null) {
+                split = false;
+            }
+        }
+        for (String line : section.getText(chords, false)) {
+            if (split) {
+                lines.addAll(LyricDrawer.splitLine(line, QueleaProperties.get().getMaxChars(), section.shouldCapitaliseFirst()));
+            } else {
+                lines.add(line);
+            }
+        }
+        return lines;
     }
 
     public String allLyrics() {
