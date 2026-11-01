@@ -293,6 +293,10 @@
                     {
                         if (livetext.responseText != currentText) {
                             document.getElementById("child").innerHTML = livetext.responseText;
+                            // Remember what is really on screen now. Without this, after the screen was
+                            // cleared the same slide would be considered "already shown" when it is
+                            // projected again, and the page would stay blank until it was refreshed.
+                            currentText = livetext.responseText;
                         }
 
                     }
