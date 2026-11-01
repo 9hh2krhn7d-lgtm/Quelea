@@ -1,4 +1,4 @@
-# Quelea
+# Quelea 1
 
 **Are you here to download the latest version? Great! You want one of these:**
 
